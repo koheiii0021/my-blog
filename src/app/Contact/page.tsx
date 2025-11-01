@@ -5,18 +5,20 @@ export default function Contact() {
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          
           <div className="grid md:grid-cols-2 gap-8">
             <div className="bg-white rounded-lg shadow-md p-8">
-              <h2 className="text-2xl font-semibold text-gray-700 mb-6">連絡先情報</h2>
+              <h2 className="text-2xl font-semibold text-gray-700 mb-6">
+                連絡先情報
+              </h2>
               <div className="space-y-4">
                 <div className="flex items-center">
-                  <Image className="mr-4"
-                    src="/contact.png"   
+                  <Image
+                    className="mr-4"
+                    src="/contact.png"
                     alt="Mail"
-                    width={40}       
-                    height={40}      
-                    priority          
+                    width={40}
+                    height={40}
+                    priority
                   />
                   <div>
                     <p className="font-semibold text-gray-700">メール</p>
@@ -24,12 +26,13 @@ export default function Contact() {
                   </div>
                 </div>
                 <div className="flex items-center">
-                  <Image className="mr-4"
-                    src="/phone.png"   
+                  <Image
+                    className="mr-4"
+                    src="/phone.png"
                     alt="Phone"
-                    width={40}       
-                    height={40}      
-                    priority          
+                    width={40}
+                    height={40}
+                    priority
                   />
                   <div>
                     <p className="font-semibold text-gray-700">電話</p>
@@ -37,12 +40,13 @@ export default function Contact() {
                   </div>
                 </div>
                 <div className="flex items-center">
-                  <Image className="mr-4"
-                    src="/addres.png"   
+                  <Image
+                    className="mr-4"
+                    src="/addres.png"
                     alt="Addres"
-                    width={40}       
-                    height={40}      
-                    priority          
+                    width={40}
+                    height={40}
+                    priority
                   />
                   <div>
                     <p className="font-semibold text-gray-700">所在地</p>
@@ -52,7 +56,9 @@ export default function Contact() {
               </div>
             </div>
             <div className="bg-white rounded-lg shadow-md p-8">
-              <h2 className="text-2xl font-semibold text-gray-700 mb-6">お問い合わせフォーム</h2>
+              <h2 className="text-2xl font-semibold text-gray-700 mb-6">
+                お問い合わせフォーム
+              </h2>
               <form className="space-y-4 text-gray-700">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
