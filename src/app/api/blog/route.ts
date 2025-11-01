@@ -11,6 +11,21 @@ export async function main() {
   }
 }
 
+export const GET = async (req: NextRequest) => {
+    try {
+      await main();
+      const posts = await prisma.post.findMany({
+        orderBy: { date: "desc" }, 
+      });
+      return NextResponse.json({ message: "Success", posts }, { status: 200 });
+    } catch (err) {
+      console.error("GETエラー:", err);
+      return NextResponse.json({ message: "Error", err }, { status: 500 });
+    } finally {
+      await prisma.$disconnect();
+    }
+  };
+
 // POST /api/blog
 export const POST = async (req: NextRequest) => {
   try {

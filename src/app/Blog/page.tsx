@@ -2,64 +2,88 @@
 
 import { useState, useEffect } from "react";
 import { PostType } from "@/types";
-import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
+import { createPortal } from "react-dom";
+
+// 定数
+const HEADER_HEIGHT = 320;
+const OVERLAP = HEADER_HEIGHT * 1;
 
 export default function Blog() {
   const [posts, setPosts] = useState<PostType[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // 投稿モーダル
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const fetchPosts = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/blog", { cache: "no-store" });
-      const data = await res.json();
-      setPosts(data.posts || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // 編集モーダル
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<PostType | null>(null);
 
+   
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => setIsClient(true), []);
+
+  // スクロール・ウィンドウサイズ
+  const [windowInfo, setWindowInfo] = useState({
+    scrollY: 0,
+    innerHeight: 0,
+  });
   useEffect(() => {
-    fetchPosts();
+    const update = () =>
+      setWindowInfo({
+        scrollY: window.scrollY,
+        innerHeight: window.innerHeight,
+      });
+    update();
+    window.addEventListener("scroll", update);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
   }, []);
 
-  // 🔹 Supabase Storage へ画像アップロード
+  // 投稿取得
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/blog", { cache: "no-store" });
+        const data = await res.json();
+        setPosts(data.posts || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  // Supabase 画像アップロード
   const uploadImage = async (file: File): Promise<string | null> => {
     const fileName = `blog-${Date.now()}-${file.name}`;
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from("public-images")
       .upload(fileName, file, { cacheControl: "3600", upsert: false });
-
-    if (error) {
-      console.error("Upload Error:", error);
-      return null;
-    }
-
-    // 公開URLを取得
+    if (error) return console.error("Upload Error:", error), null;
     const { data: urlData } = supabase.storage
       .from("public-images")
       .getPublicUrl(fileName);
-
     return urlData.publicUrl;
   };
 
+  // 投稿処理
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !description.trim()) return;
-
     let imageUrl = null;
-    if (image) {
-      imageUrl = await uploadImage(image);
-    }
+    if (image) imageUrl = await uploadImage(image);
 
     try {
       const res = await fetch("/api/blog", {
@@ -67,9 +91,7 @@ export default function Blog() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, description, image: imageUrl }),
       });
-
       if (!res.ok) throw new Error("投稿に失敗しました");
-
       const data = await res.json();
       setPosts([data.post, ...posts]);
       setTitle("");
@@ -83,13 +105,63 @@ export default function Blog() {
     }
   };
 
+  // 編集保存
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPost) return;
+    let imageUrl = editingPost.image;
+    if (image) imageUrl = await uploadImage(image);
+
+    try {
+      const res = await fetch(`/api/blog/${editingPost.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editingPost.title,
+          description: editingPost.description,
+          image: imageUrl,
+        }),
+      });
+      if (!res.ok) throw new Error("更新に失敗しました");
+
+      const updated = await res.json();
+      setPosts((p) =>
+        p.map((post) =>
+          String(post.id) === String(updated.post.id) ? updated.post : post
+        )
+      );
+      setIsEditModalOpen(false);
+      setEditingPost(null);
+    } catch (err) {
+      console.error(err);
+      alert("更新時にエラーが発生しました");
+    }
+  };
+
+  // 削除
+  const handleDelete = async (id: string | number) => {
+    if (!confirm("本当に削除しますか？")) return;
+    try {
+      const res = await fetch(`/api/blog/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("削除に失敗しました");
+      setPosts((p) => p.filter((post) => String(post.id) !== String(id)));
+      setIsEditModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      alert("削除に失敗しました");
+    }
+  };
+
+  // ファイルアップロード
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.type.startsWith("image/")) {
+    if (file?.type.startsWith("image/")) {
       setImage(file);
       setPreviewUrl(URL.createObjectURL(file));
     }
   };
+
+  const { scrollY, innerHeight } = windowInfo;
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-700 flex justify-center py-12 px-4 relative">
@@ -98,7 +170,7 @@ export default function Blog() {
           Blog
         </h1>
 
-        {/* 投稿一覧 */}
+        {/* 投稿リスト */}
         <div className="space-y-8">
           {loading ? (
             <p className="text-center text-gray-400">読み込み中...</p>
@@ -108,12 +180,10 @@ export default function Blog() {
                 key={post.id}
                 className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 p-8"
               >
-                <p className="mb-2 text-sm text-gray-500">
-                  {new Date(post.date).toLocaleDateString()}
+                <p className="mb-4 text-sm text-gray-500">
+                  {isClient ? new Date(post.date).toLocaleDateString() : ""}
                 </p>
-
                 <h2 className="text-2xl font-semibold mb-3">{post.title}</h2>
-
                 {post.image && (
                   <div className="my-4">
                     <Image
@@ -125,12 +195,19 @@ export default function Blog() {
                     />
                   </div>
                 )}
-
-                <p className="text-gray-600 leading-relaxed mt-2">
+                <p className="text-gray-600 leading-relaxed mt-2 whitespace-pre-wrap">
                   {post.description}
                 </p>
                 <div className="flex justify-end mt-4">
-                  <Link href={`/blog/edit/${post.id}`}>編集</Link>
+                  <button
+                    onClick={() => {
+                      setEditingPost(post);
+                      setIsEditModalOpen(true);
+                    }}
+                    className="p-2 rounded-full transition-all duration-300 hover:scale-110 hover:shadow-md hover:bg-gray-100 active:scale-95"
+                  >
+                    <Image src="/edit.png" alt="編集" width={30} height={30} />
+                  </button>
                 </div>
               </article>
             ))
@@ -141,17 +218,93 @@ export default function Blog() {
       </main>
 
       {/* 投稿ボタン */}
-      <button
-        onClick={() => setIsModalOpen(true)}
-        className="fixed top-30 right-20 bg-white border border-gray-300/70 shadow-md hover:shadow-lg rounded-full p-2 text-gray-700 transition-all"
-      >
-        <Image src="/post.png" alt="投稿" width={50} height={50} />
-      </button>
+      {isClient &&
+        createPortal(
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="fixed top-20 right-5 md:top-auto md:bottom-10 md:right-20 bg-white border border-gray-300/70 shadow-md hover:shadow-lg rounded-full p-2 text-gray-700 transition-all z-[999]"
+          >
+            <Image src="/post.png" alt="投稿" width={50} height={50} />
+          </button>,
+          document.body
+        )}
 
-      {/* モーダル */}
+      {/* 編集モーダル */}
+      {isEditModalOpen && editingPost && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+          <div
+            className="absolute left-1/2 bg-white rounded-xl p-6 w-96 max-h-[90vh] overflow-y-auto shadow-lg"
+            style={{
+              top: innerHeight / 2 + scrollY - OVERLAP,
+              transform: "translate(-50%, -50%)",
+            }}
+          >
+            <h2 className="text-xl font-semibold mb-4">記事を編集</h2>
+            <form onSubmit={handleEditSubmit} className="space-y-3">
+              <input
+                type="text"
+                value={editingPost.title}
+                onChange={(e) =>
+                  setEditingPost({ ...editingPost, title: e.target.value })
+                }
+                className="w-full border rounded-lg p-2"
+              />
+              <textarea
+                value={editingPost.description}
+                onChange={(e) =>
+                  setEditingPost({
+                    ...editingPost,
+                    description: e.target.value,
+                  })
+                }
+                className="w-full border rounded-lg p-2 h-24"
+              />
+              {editingPost.image && (
+                <Image
+                  src={editingPost.image}
+                  alt="preview"
+                  width={300}
+                  height={200}
+                  className="mx-auto rounded-lg shadow-sm"
+                />
+              )}
+              <div className="flex justify-end gap-3 mt-4">
+                <button
+                  type="button"
+                  onClick={() => handleDelete(String(editingPost.id))}
+                  className="px-4 py-2 text-red-500 hover:text-red-700"
+                >
+                  削除
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-4 py-2 text-gray-500 hover:text-gray-700"
+                >
+                  キャンセル
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+                >
+                  保存
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 投稿モーダル */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-96 shadow-lg">
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+          <div
+            className="absolute left-1/2 bg-white rounded-xl p-6 w-96 max-h-[90vh] overflow-y-auto shadow-lg"
+            style={{
+              top: innerHeight / 2 + scrollY - OVERLAP,
+              transform: "translate(-50%, -50%)",
+            }}
+          >
             <h2 className="text-xl font-semibold mb-4">新しい投稿</h2>
             <form onSubmit={handleSubmit} className="space-y-3">
               <input
@@ -170,15 +323,10 @@ export default function Blog() {
               <div
                 onDragOver={(e) => {
                   e.preventDefault();
-                  e.stopPropagation();
-                  e.currentTarget.classList.add(
-                    "border-blue-400",
-                    "bg-blue-50"
-                  );
+                  e.currentTarget.classList.add("border-blue-400", "bg-blue-50");
                 }}
                 onDragLeave={(e) => {
                   e.preventDefault();
-                  e.stopPropagation();
                   e.currentTarget.classList.remove(
                     "border-blue-400",
                     "bg-blue-50"
@@ -186,17 +334,15 @@ export default function Blog() {
                 }}
                 onDrop={(e) => {
                   e.preventDefault();
-                  e.stopPropagation();
+                  const file = e.dataTransfer.files?.[0];
+                  if (file?.type.startsWith("image/")) {
+                    setImage(file);
+                    setPreviewUrl(URL.createObjectURL(file));
+                  }
                   e.currentTarget.classList.remove(
                     "border-blue-400",
                     "bg-blue-50"
                   );
-
-                  const file = e.dataTransfer.files?.[0];
-                  if (file && file.type.startsWith("image/")) {
-                    setImage(file);
-                    setPreviewUrl(URL.createObjectURL(file));
-                  }
                 }}
                 className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer transition-all duration-300"
               >
@@ -251,3 +397,4 @@ export default function Blog() {
     </div>
   );
 }
+
