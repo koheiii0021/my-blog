@@ -45,7 +45,6 @@ export const DELETE = async (req: NextRequest, context: { params: Promise<{ id: 
     
     const post = await prisma.post.findUnique({
       where: { id: parseInt(id) },
-      select: { image: true },
     });
 
     
