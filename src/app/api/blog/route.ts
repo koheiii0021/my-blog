@@ -7,18 +7,20 @@ export async function main() {
   try {
     await prisma.$connect();
   } catch (err) {
-    return Error("DB接続に失敗しました");
+    console.error("DB接続に失敗しました:", err);
+    throw new Error("DB接続に失敗しました");
   }
 }
 
 // GET /api/blog
-export const GET = async (req: NextRequest) => {
+export const GET = async (_req: NextRequest) => {
   try {
     await main();
     const posts = await prisma.post.findMany();
     return NextResponse.json({ message: "Success", posts }, { status: 200 });
   } catch (err) {
-    return NextResponse.json({ message: "Error", err }, { status: 500 });
+    console.error("GET Error:", err);
+    return NextResponse.json({ message: "Error" }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }
@@ -33,7 +35,8 @@ export const POST = async (req: NextRequest) => {
     const post = await prisma.post.create({ data: { title, description } });
     return NextResponse.json({ message: "Success", post }, { status: 201 });
   } catch (err) {
-    return NextResponse.json({ message: "Error", err }, { status: 500 });
+    console.error("POST Error:", err);
+    return NextResponse.json({ message: "Error" }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }

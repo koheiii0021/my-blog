@@ -4,50 +4,55 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// GET /api/blog/[id]
-export const GET = async (req: NextRequest, { params }: { params: { id: string } }) => {
+export const GET = async (req: NextRequest, context: { params: Promise<{ id: string }> }) => {
   try {
-    const id = parseInt(params.id);
+    const { id } = await context.params; 
     await main();
-    const post = await prisma.post.findFirst({ where: { id } });
+    const post = await prisma.post.findFirst({ where: { id: parseInt(id) } });
     return NextResponse.json({ message: "Success", post }, { status: 200 });
   } catch (err) {
-    return NextResponse.json({ message: "Error", err }, { status: 500 });
+    console.error(err);
+    return NextResponse.json({ message: "Error" }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }
 };
 
-// PUT /api/blog/[id]
-export const PUT = async (req: NextRequest, { params }: { params: { id: string } }) => {
+export const PUT = async (req: NextRequest, context: { params: Promise<{ id: string }> }) => {
   try {
-    const id = parseInt(params.id);
+    const { id } = await context.params;
     const { title, description } = await req.json();
+
     await main();
     const post = await prisma.post.update({
       data: { title, description },
-      where: { id },
+      where: { id: parseInt(id) },
     });
+
     return NextResponse.json({ message: "Success", post }, { status: 200 });
   } catch (err) {
-    return NextResponse.json({ message: "Error", err }, { status: 500 });
+    console.error(err);
+    return NextResponse.json({ message: "Error" }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }
 };
 
-// DELETE /api/blog/[id]
-export const DELETE = async (req: NextRequest, { params }: { params: { id: string } }) => {
+export const DELETE = async (req: NextRequest, context: { params: Promise<{ id: string }> }) => {
   try {
-    const id = parseInt(params.id);
+    const { id } = await context.params;
     await main();
+
     const post = await prisma.post.delete({
-      where: { id },
+      where: { id: parseInt(id) },
     });
+
     return NextResponse.json({ message: "Success", post }, { status: 200 });
   } catch (err) {
-    return NextResponse.json({ message: "Error", err }, { status: 500 });
+    console.error(err);
+    return NextResponse.json({ message: "Error" }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }
 };
+
