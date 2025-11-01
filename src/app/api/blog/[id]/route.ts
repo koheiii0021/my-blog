@@ -1,68 +1,83 @@
 import { NextRequest, NextResponse } from "next/server";
 import { main } from "../route";
 import { prisma } from "@/lib/prisma";
-import { supabase } from "@/lib/supabase"; 
+import { supabase } from "@/lib/supabase";
 
-export const GET = async (req: NextRequest, context: { params: Promise<{ id: string }> }) => {
+// ✅ GET
+export const GET = async (
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }   
+) => {
   try {
-    const { id } = await context.params;
+    const { id } = await params;                     
     await main();
-    const post = await prisma.post.findFirst({ where: { id: parseInt(id) } });
+
+    const post = await prisma.post.findUnique({
+      where: { id: parseInt(id, 10) },
+      select: { id: true, title: true, description: true, date: true, image: true },
+    });
+
+    if (!post) return NextResponse.json({ message: "Not Found" }, { status: 404 });
     return NextResponse.json({ message: "Success", post }, { status: 200 });
   } catch (err) {
-    console.error(err);
+    console.error("GET Error:", err);
     return NextResponse.json({ message: "Error" }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }
 };
 
-export const PUT = async (req: NextRequest, context: { params: Promise<{ id: string }> }) => {
+// ✅ PUT
+export const PUT = async (
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }    
+) => {
   try {
-    const { id } = await context.params;
-    const { title, description } = await req.json();
+    const { id } = await params;                     
+    const { title, description, image } = await req.json();
 
     await main();
     const post = await prisma.post.update({
-      data: { title, description },
-      where: { id: parseInt(id) },
+      where: { id: parseInt(id, 10) },
+      data: { title, description, image },
+      select: { id: true, title: true, description: true, date: true, image: true },
     });
 
     return NextResponse.json({ message: "Success", post }, { status: 200 });
   } catch (err) {
-    console.error(err);
+    console.error("PUT Error:", err);
     return NextResponse.json({ message: "Error" }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }
 };
 
-export const DELETE = async (req: NextRequest, context: { params: Promise<{ id: string }> }) => {
+// ✅ DELETE
+export const DELETE = async (
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }    
+) => {
   try {
-    const { id } = await context.params;
+    const { id } = await params;                     
     await main();
 
-    
     const post = await prisma.post.findUnique({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(id, 10) },
+      select: { image: true },
     });
 
-    
-    await prisma.post.delete({
-      where: { id: parseInt(id) },
-    });
+    await prisma.post.delete({ where: { id: parseInt(id, 10) } });
 
-    
     if (post?.image) {
       try {
         const url = new URL(post.image);
-        const filePath = url.pathname.split("/public-images/")[1]; 
+        const filePath = url.pathname.split("/public-images/")[1];
         if (filePath) {
           await supabase.storage.from("public-images").remove([filePath]);
-          console.log("✅ 画像削除成功:", filePath);
+          console.log("✅ Supabase画像削除成功:", filePath);
         }
       } catch (err) {
-        console.warn("⚠️ 画像削除スキップ:", err);
+        console.warn("⚠️ Supabase画像削除スキップ:", err);
       }
     }
 
