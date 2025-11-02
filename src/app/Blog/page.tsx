@@ -222,7 +222,7 @@ export default function Blog() {
         createPortal(
           <button
             onClick={() => setIsModalOpen(true)}
-            className="fixed top-20 right-5 md:top-auto md:bottom-10 md:right-20 bg-white border border-gray-300/70 shadow-md hover:shadow-lg rounded-full p-2 text-gray-700 transition-all z-[999]"
+            className="fixed top-20 right-5 md:top-auto md:bottom-10 md:right-20 bg-white border border-gray-300/70 shadow-md hover:shadow-lg rounded-full p-2 text-gray-700 transition-all z-999"
           >
             <Image src="/post.png" alt="投稿" width={50} height={50} />
           </button>,

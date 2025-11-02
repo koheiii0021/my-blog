@@ -12,7 +12,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
         ease: 'easeOut' 
       }}
       style={{
-        willChange: 'transform, opacity'  // GPU加速を促進
+        willChange: 'transform, opacity'  
       }}
     >
       {children}
