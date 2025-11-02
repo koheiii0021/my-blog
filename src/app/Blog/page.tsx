@@ -1,10 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { PostType } from "@/types";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { createPortal } from "react-dom";
+
+const client = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 // 定数
 const HEADER_HEIGHT = 320;
@@ -13,6 +19,7 @@ const OVERLAP = HEADER_HEIGHT * 1;
 export default function Blog() {
   const [posts, setPosts] = useState<PostType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // 投稿モーダル
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,9 +32,15 @@ export default function Blog() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<PostType | null>(null);
 
-   
   const [isClient, setIsClient] = useState(false);
   useEffect(() => setIsClient(true), []);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await client.auth.getSession();
+      setIsAdmin(!!data.session);
+    })();
+  }, []);
 
   // スクロール・ウィンドウサイズ
   const [windowInfo, setWindowInfo] = useState({
@@ -198,17 +211,24 @@ export default function Blog() {
                 <p className="text-gray-600 leading-relaxed mt-2 whitespace-pre-wrap">
                   {post.description}
                 </p>
-                <div className="flex justify-end mt-4">
-                  <button
-                    onClick={() => {
-                      setEditingPost(post);
-                      setIsEditModalOpen(true);
-                    }}
-                    className="p-2 rounded-full transition-all duration-300 hover:scale-110 hover:shadow-md hover:bg-gray-100 active:scale-95"
-                  >
-                    <Image src="/edit.png" alt="編集" width={30} height={30} />
-                  </button>
-                </div>
+                {isAdmin && (
+                  <div className="flex justify-end mt-4">
+                    <button
+                      onClick={() => {
+                        setEditingPost(post);
+                        setIsEditModalOpen(true);
+                      }}
+                      className="p-2 rounded-full transition-all duration-300 hover:scale-110 hover:shadow-md hover:bg-gray-100 active:scale-95"
+                    >
+                      <Image
+                        src="/edit.png"
+                        alt="編集"
+                        width={30}
+                        height={30}
+                      />
+                    </button>
+                  </div>
+                )}
               </article>
             ))
           ) : (
@@ -219,6 +239,7 @@ export default function Blog() {
 
       {/* 投稿ボタン */}
       {isClient &&
+        isAdmin &&
         createPortal(
           <button
             onClick={() => setIsModalOpen(true)}
@@ -323,7 +344,10 @@ export default function Blog() {
               <div
                 onDragOver={(e) => {
                   e.preventDefault();
-                  e.currentTarget.classList.add("border-blue-400", "bg-blue-50");
+                  e.currentTarget.classList.add(
+                    "border-blue-400",
+                    "bg-blue-50"
+                  );
                 }}
                 onDragLeave={(e) => {
                   e.preventDefault();
@@ -397,4 +421,3 @@ export default function Blog() {
     </div>
   );
 }
-
