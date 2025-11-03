@@ -27,7 +27,27 @@ export default function LoginPage() {
       return;
     }
 
-    
+
+    window.location.href = "/Blog";
+  };
+
+  const handleGuestLogin = async () => {
+    setError("");
+
+    // ゲストユーザーの認証情報
+    const guestEmail = process.env.NEXT_PUBLIC_GUEST_EMAIL || "guest@example.com";
+    const guestPassword = process.env.NEXT_PUBLIC_GUEST_PASSWORD || "guest123456";
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: guestEmail,
+      password: guestPassword,
+    });
+
+    if (error) {
+      setError("ゲストログインに失敗しました：" + error.message);
+      return;
+    }
+
     window.location.href = "/Blog";
   };
 
@@ -62,6 +82,23 @@ export default function LoginPage() {
           className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition"
         >
           ログイン
+        </button>
+        <div className="mt-4 text-center">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">または</span>
+            </div>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={handleGuestLogin}
+          className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 transition mt-4"
+        >
+          ゲストでログイン
         </button>
       </form>
     </div>

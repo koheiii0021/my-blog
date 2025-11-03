@@ -6,6 +6,7 @@ import { PostType } from "@/types";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { createPortal } from "react-dom";
+import LogoutButton from "../components/LogoutButton";
 
 const client = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -42,7 +43,7 @@ export default function Blog() {
     })();
   }, []);
 
-  // スクロール・ウィンドウサイズ
+  
   const [windowInfo, setWindowInfo] = useState({
     scrollY: 0,
     innerHeight: 0,
@@ -56,6 +57,8 @@ export default function Blog() {
     update();
     window.addEventListener("scroll", update);
     window.addEventListener("resize", update);
+
+
     return () => {
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
@@ -178,6 +181,7 @@ export default function Blog() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-700 flex justify-center py-12 px-4 relative">
+      <LogoutButton />
       <main className="max-w-3xl w-full">
         <h1 className="text-3xl font-thin text-center mb-12 tracking-wide">
           Blog
@@ -243,7 +247,7 @@ export default function Blog() {
         createPortal(
           <button
             onClick={() => setIsModalOpen(true)}
-            className="fixed top-20 right-5 md:top-auto md:bottom-10 md:right-20 bg-white border border-gray-300/70 shadow-md hover:shadow-lg rounded-full p-2 text-gray-700 transition-all z-999"
+            className="fixed top-20 right-5 md:top-auto md:bottom-10 md:right-20 bg-white border border-gray-300/70 shadow-md hover:shadow-lg rounded-full p-2 text-gray-700 transition-all z-50"
           >
             <Image src="/post.png" alt="投稿" width={50} height={50} />
           </button>,
