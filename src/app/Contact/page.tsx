@@ -22,7 +22,7 @@ export default function Contact() {
                   />
                   <div>
                     <p className="font-semibold text-gray-700">メール</p>
-                    <p className="text-gray-600">tk.xxhk@icloud.com</p>
+                    <p className="text-gray-600">xxxxxxxx@gmail.com</p>
                   </div>
                 </div>
                 <div className="flex items-center">
