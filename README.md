@@ -1,3 +1,6 @@
+<br><br>
+
+
 # 📝 my-blog
 
 > **エンジニアとしての学びを形に残すための個人ブログアプリ**
@@ -67,5 +70,40 @@ SNSのような発信ではなく、**自分のための記録**として続け�
 
 <br><br>
 
+## 🧱 技術スタック
+
+| カテゴリ | 使用技術 |
+|:--|:--|
+| フレームワーク | Next.js 15 (App Router) |
+| 言語 | TypeScript |
+| スタイリング | Tailwind CSS |
+| データベース | Supabase (PostgreSQL) |
+| ORM | Prisma |
+| デプロイ | Vercel |
+| 認証／Storage | Supabase Auth / Storage |
+
+<br><br>
 
 
+## 🌐 デプロイ先
+
+**Vercel**  
+https://my-blog-lyart-eight-42.vercel.app/
+
+<br><br>
+
+
+## 📁 ディレクトリ構成
+
+```bash
+my-blog/
+ ├─ app/
+ │   ├─ api/blog/route.ts      # APIルート（CRUD処理）
+ │   ├─ Blog/page.tsx          # 記事一覧ページ
+ │   ├─ layout.tsx / globals.css
+ ├─ lib/supabase.ts            # Supabaseクライアント設定
+ ├─ prisma/schema.prisma       # Prismaスキーマ
+ ├─ .env.local                 # 環境変数（非公開）
+ └─ package.json
+
+<br><br>
