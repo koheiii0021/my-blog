@@ -4,7 +4,7 @@ export default function Works() {
       <main>
         <div>
           <p className="text-center mt-40">
-            これからたくさん増えるからたのしみにしてて👍
+            👍
           </p>
         </div>
       </main>
