@@ -25,12 +25,11 @@ export default function Home() {
                   <br />
                   島根・鳥取・広島・香川・岡山・大阪・京都を経て現在大阪
                   <br />
-                  2025年よりと書いていいですか！そこのあなた！！
-                  <br />
+
                   <br />
                   CODで大会とかでてたりして優勝とかしてたり
                   <br />
-                  FPS好きな人一緒にゲームしましょ。。。
+                  FPS好きな人一緒にゲームしましょ。
                   <br />
                   キャリーできます！！
                 </p>
@@ -56,7 +55,7 @@ export default function Home() {
                   </li>
                   <li className="flex items-center">
                     <span className="w-2 h-2 bg-gray-500 rounded-full mr-3"></span>
-                    DB
+                    PostgreSQL
                   </li>
                 </ul>
               </div>
